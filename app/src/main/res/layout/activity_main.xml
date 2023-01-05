@@ -38,14 +38,14 @@
         android:id="@+id/text_ODD"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Ostatnio dodane dziury"
+        android:text="Ostatnio dodana dziura"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.353" />
+        app:layout_constraintVertical_bias="0.451" />
 
     <View
         android:id="@+id/divider"
@@ -56,102 +56,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.309" />
+        app:layout_constraintVertical_bias="0.4" />
 
     <TextView
         android:id="@+id/text_OD"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
+        android:layout_width="397dp"
+        android:layout_height="98dp"
         android:textSize="16sp"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.448"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD1"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.517"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD2"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.584"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD3"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.652"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD4"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.721"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD5"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.791"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD6"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.858"
-        tools:text="Dziura najnowsza" />
-
-    <TextView
-        android:id="@+id/text_OD7"
-        android:layout_width="389dp"
-        android:layout_height="26dp"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.929"
+        app:layout_constraintVertical_bias="0.575"
         tools:text="Dziura najnowsza" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

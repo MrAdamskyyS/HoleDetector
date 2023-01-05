@@ -14,6 +14,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -27,31 +28,51 @@ public class MainActivity extends Activity {
 
     private LocationManager locationManager;
     private LocationListener locationListener;
-    private static final long MIN_TIME = 400;
+    private static final long MIN_TIME = 100;
     private static final float MIN_DISTANCE = 1;
     private Location currentLocation;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private SensorManager sensorManager;
-    private SensorEventListener sensorListener;
-    private Sensor accelerometer;
-    private Sensor gyroscope;
-    private static final float MIN_MOVEMENT = 0.2f;
-    private float lastX, lastY, lastZ;
-    private float deltaZ;
-    private long lastUpdate;
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private static final float MIN_SHAKE_VALUE = 4;
+    private double accelerationCurrValue;
+    private double accelerationPrevValue;
+    private double changeInAccelleration;
 
     private TextView text_OD;
-    private TextView text_OD1;
-    private TextView text_OD2;
-    private TextView text_OD3;
-    private TextView text_OD4;
-    private TextView text_OD5;
-    private TextView text_OD6;
-    private TextView text_OD7;
 
     private Button button_DD;
 
     private Switch switch1;
+
+    private SensorEventListener sensorListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent sensorEvent) {
+            float x = sensorEvent.values[0];
+            float y = sensorEvent.values[1];
+            float z = sensorEvent.values[2];
+
+            accelerationCurrValue = Math.sqrt((x * x + y * y + z * z));
+            changeInAccelleration = Math.abs(accelerationCurrValue - accelerationPrevValue);
+            accelerationPrevValue = accelerationCurrValue;
+
+                if (changeInAccelleration >= MIN_SHAKE_VALUE) {
+                    button_DD.setVisibility(View.VISIBLE);
+                    final Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            button_DD.setVisibility(View.GONE);
+                        }
+                    }, 15000);
+                }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int i) {
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,13 +80,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         text_OD = findViewById(R.id.text_OD);
-        text_OD1 = findViewById(R.id.text_OD1);
-        text_OD2 = findViewById(R.id.text_OD2);
-        text_OD3 = findViewById(R.id.text_OD3);
-        text_OD4 = findViewById(R.id.text_OD4);
-        text_OD5 = findViewById(R.id.text_OD5);
-        text_OD6 = findViewById(R.id.text_OD6);
-        text_OD7 = findViewById(R.id.text_OD7);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
@@ -73,7 +87,6 @@ public class MainActivity extends Activity {
             public void onLocationChanged(Location location) {
                 // zapisz aktualną lokalizację do zmiennej currentLocation
                 currentLocation = location;
-                button_DD.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -105,9 +118,12 @@ public class MainActivity extends Activity {
                     }
                     // pobieraj aktualną lokalizację co MIN_TIME milisekund, jeśli ruch użytkownika przekroczy MIN_DISTANCE metrów
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, locationListener);
+                    mSensorManager.registerListener(sensorListener, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 } else {
                     // zatrzymaj pobieranie aktualnej lokalizacji
                     locationManager.removeUpdates(locationListener);
+                    mSensorManager.unregisterListener(sensorListener);
+                    button_DD.setVisibility(View.GONE);
                 }
             }
         });
@@ -121,7 +137,7 @@ public class MainActivity extends Activity {
                 // sprawdź czy currentLocation zawiera dane o aktualnej lokalizacji
                 if (currentLocation != null) {
                     // zapisz aktualną lokalizację do bazy danych
-                    saveLocationToDB(currentLocation);
+                    saveLocationToDB(currentLocation, changeInAccelleration);
                     // ukryj button
                     button_DD.setVisibility(View.GONE);
                     // wyświetl komunikat o sukcesie
@@ -129,41 +145,10 @@ public class MainActivity extends Activity {
                 }
             }
         });
-        // pobierz referencję do menedżera sensorów
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        // pobierz referencję do akcelerometru
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        // pobierz referencję do żyroskopu
-        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        // ustaw początkowe wartości dla ostatnio pobranych danych z sensora
-        lastUpdate = System.currentTimeMillis();
-        lastX = lastY = lastZ = 0;
-        sensorListener = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER || event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                    // pobierz aktualne wartości z sensora
-                    float x = event.values[0];
-                    float y = event.values[1];
-                    float z = event.values[2];
-                    // oblicz różnicę między ostatnimi a obecny
-                    deltaZ = lastZ - z;
-                    // sprawdź czy telefon został przesunięty o co najmniej MIN_MOVEMENT w dół
-                    if (deltaZ > MIN_MOVEMENT) {
-                        // aktualizuj ostatnio pobrane dane
-                        lastX = x;
-                        lastY = y;
-                        lastZ = z;
-                        lastUpdate = System.currentTimeMillis();
-                        // pokaż button pozwalający na zapisanie lokalizacji do bazy danych
-                        button_DD.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            }
-        };
+
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
     }
 
     @Override
@@ -173,13 +158,6 @@ public class MainActivity extends Activity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // uprawnienie zostało udzielone, można rozpocząć pobieranie lokalizacji
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
                     return;
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, locationListener);
@@ -190,7 +168,7 @@ public class MainActivity extends Activity {
             }
         }
     }
-    private void saveLocationToDB(Location location) {
+    private void saveLocationToDB(Location location, double changeInAccelleration) {
         // otwórz połączenie z bazą danych
         SQLiteDatabase db = openOrCreateDatabase("locations", MODE_PRIVATE, null);
         // utwórz tabelę, jeśli nie istnieje
@@ -202,7 +180,8 @@ public class MainActivity extends Activity {
         // ustaw wartości dla zapytania
         statement.bindDouble(1, location.getLatitude());
         statement.bindDouble(2, location.getLongitude());
-        statement.bindDouble(3, lastZ);
+        statement.bindDouble(3, changeInAccelleration);
+        text_OD.setText("Lat: "+location.getLatitude() + ", Lon: "+location.getLongitude() +", Moc: "+ changeInAccelleration);
         // wykonaj zapytanie
         statement.executeInsert();
         // zamknij obiekt zapytania i połączenie z bazą danych
