@@ -6,20 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/text_DD"
-        android:layout_width="300dp"
-        android:layout_height="58dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.495"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.203"
-        tools:text="[DODANO DZIURE PLACE HOLDER]" />
-
     <Switch
         android:id="@+id/switch1"
         android:layout_width="251dp"
@@ -45,7 +31,7 @@
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.351"
+        app:layout_constraintVertical_bias="0.198"
         tools:visibility="visible" />
 
     <TextView
@@ -56,10 +42,10 @@
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.499" />
+        app:layout_constraintVertical_bias="0.353" />
 
     <View
         android:id="@+id/divider"
@@ -70,7 +56,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.457" />
+        app:layout_constraintVertical_bias="0.309" />
 
     <TextView
         android:id="@+id/text_OD"
@@ -81,7 +67,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.56"
+        app:layout_constraintVertical_bias="0.448"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -93,7 +79,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.618"
+        app:layout_constraintVertical_bias="0.517"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -105,7 +91,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.675"
+        app:layout_constraintVertical_bias="0.584"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -117,7 +103,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.733"
+        app:layout_constraintVertical_bias="0.652"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -129,7 +115,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.788"
+        app:layout_constraintVertical_bias="0.721"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -141,7 +127,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.848"
+        app:layout_constraintVertical_bias="0.791"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -153,7 +139,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.906"
+        app:layout_constraintVertical_bias="0.858"
         tools:text="Dziura najnowsza" />
 
     <TextView
@@ -165,7 +151,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.96"
+        app:layout_constraintVertical_bias="0.929"
         tools:text="Dziura najnowsza" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

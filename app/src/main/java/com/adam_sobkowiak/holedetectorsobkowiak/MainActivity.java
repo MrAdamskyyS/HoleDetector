@@ -6,6 +6,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -17,17 +21,25 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Date;
+import androidx.core.app.ActivityCompat;
 
 public class MainActivity extends Activity {
 
     private LocationManager locationManager;
     private LocationListener locationListener;
     private static final long MIN_TIME = 400;
-    private static final float MIN_DISTANCE = 1000;
+    private static final float MIN_DISTANCE = 1;
     private Location currentLocation;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private SensorManager sensorManager;
+    private SensorEventListener sensorListener;
+    private Sensor accelerometer;
+    private Sensor gyroscope;
+    private static final float MIN_MOVEMENT = 0.2f;
+    private float lastX, lastY, lastZ;
+    private float deltaZ;
+    private long lastUpdate;
 
-    private TextView text_DD;
     private TextView text_OD;
     private TextView text_OD1;
     private TextView text_OD2;
@@ -46,7 +58,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        text_DD = findViewById(R.id.text_DD);
         text_OD = findViewById(R.id.text_OD);
         text_OD1 = findViewById(R.id.text_OD1);
         text_OD2 = findViewById(R.id.text_OD2);
@@ -62,7 +73,6 @@ public class MainActivity extends Activity {
             public void onLocationChanged(Location location) {
                 // zapisz aktualną lokalizację do zmiennej currentLocation
                 currentLocation = location;
-                // pokaż button pozwalający na zapisanie lokalizacji do bazy danych
                 button_DD.setVisibility(View.VISIBLE);
             }
 
@@ -102,39 +112,97 @@ public class MainActivity extends Activity {
             }
         });
 
-    // pobierz button z layoutu
-    button_DD = findViewById(R.id.button_DD);
-    // ustaw słuchacz dla buttona
-    button_DD.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // sprawdź czy currentLocation zawiera dane o aktualnej lokalizacji
-            if (currentLocation != null) {
-                // zapisz aktualną lokalizację do bazy danych
-                saveLocationToDB(currentLocation);
-                // ukryj button
-                button_DD.setVisibility(View.GONE);
-                // wyświetl komunikat o sukcesie
-                Toast.makeText(MainActivity.this, "Lokalizacja zapisana do bazy danych", Toast.LENGTH_SHORT).show();
+        // pobierz button z layoutu
+        button_DD = findViewById(R.id.button_DD);
+        // ustaw słuchacz dla buttona
+        button_DD.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // sprawdź czy currentLocation zawiera dane o aktualnej lokalizacji
+                if (currentLocation != null) {
+                    // zapisz aktualną lokalizację do bazy danych
+                    saveLocationToDB(currentLocation);
+                    // ukryj button
+                    button_DD.setVisibility(View.GONE);
+                    // wyświetl komunikat o sukcesie
+                    Toast.makeText(MainActivity.this, "Lokalizacja zapisana do bazy danych", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        // pobierz referencję do menedżera sensorów
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        // pobierz referencję do akcelerometru
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        // pobierz referencję do żyroskopu
+        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        // ustaw początkowe wartości dla ostatnio pobranych danych z sensora
+        lastUpdate = System.currentTimeMillis();
+        lastX = lastY = lastZ = 0;
+        sensorListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER || event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+                    // pobierz aktualne wartości z sensora
+                    float x = event.values[0];
+                    float y = event.values[1];
+                    float z = event.values[2];
+                    // oblicz różnicę między ostatnimi a obecny
+                    deltaZ = lastZ - z;
+                    // sprawdź czy telefon został przesunięty o co najmniej MIN_MOVEMENT w dół
+                    if (deltaZ > MIN_MOVEMENT) {
+                        // aktualizuj ostatnio pobrane dane
+                        lastX = x;
+                        lastY = y;
+                        lastZ = z;
+                        lastUpdate = System.currentTimeMillis();
+                        // pokaż button pozwalający na zapisanie lokalizacji do bazy danych
+                        button_DD.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            }
+        };
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            // sprawdź czy zostało udzielone uprawnienie do uzyskiwania dostępu do lokalizacji
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // uprawnienie zostało udzielone, można rozpocząć pobieranie lokalizacji
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, locationListener);
+            } else {
+                // uprawnienie nie zostało udzielone, wyświetl komunikat i zakończ działanie aplikacji
+                Toast.makeText(MainActivity.this, "Brak uprawnień do pobierania lokalizacji", Toast.LENGTH_SHORT).show();
+                switch1.setChecked(false);
             }
         }
-    });
-}
-
-
+    }
     private void saveLocationToDB(Location location) {
         // otwórz połączenie z bazą danych
         SQLiteDatabase db = openOrCreateDatabase("locations", MODE_PRIVATE, null);
         // utwórz tabelę, jeśli nie istnieje
-        db.execSQL("CREATE TABLE IF NOT EXISTS locations (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, latitude REAL, longitude REAL);");
+        db.execSQL("CREATE TABLE IF NOT EXISTS locations (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, latitude REAL, longitude REAL, change REAL);");
         // utwórz zapytanie INSERT
-        String sql = "INSERT INTO locations (latitude, longitude) VALUES (?, ?)";
-        text_DD.setText("Dodano dziure");
+        String sql = "INSERT INTO locations (latitude, longitude, change) VALUES (?, ?, ?)";
         // utwórz obiekt zapytania
         SQLiteStatement statement = db.compileStatement(sql);
         // ustaw wartości dla zapytania
         statement.bindDouble(1, location.getLatitude());
         statement.bindDouble(2, location.getLongitude());
+        statement.bindDouble(3, lastZ);
         // wykonaj zapytanie
         statement.executeInsert();
         // zamknij obiekt zapytania i połączenie z bazą danych
@@ -142,3 +210,5 @@ public class MainActivity extends Activity {
         db.close();
     }
 };
+
+
