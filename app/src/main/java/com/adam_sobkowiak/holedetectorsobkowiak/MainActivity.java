@@ -3,6 +3,7 @@ package com.adam_sobkowiak.holedetectorsobkowiak;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
@@ -42,6 +43,7 @@ public class MainActivity extends Activity {
     private TextView text_OD;
 
     private Button button_DD;
+    private Button TestButton;
 
     private Switch switch1;
 
@@ -149,6 +151,20 @@ public class MainActivity extends Activity {
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
+
+        //Test
+        TestButton = findViewById(R.id.button);
+        TestButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity2();
+            }
+        });
+    }
+
+    public void MainActivity2(){
+        Intent intent = new Intent(this, MainActivity2.class);
+        startActivity(intent);
     }
 
     @Override
