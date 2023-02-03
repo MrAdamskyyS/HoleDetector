@@ -3,10 +3,13 @@ package com.adam_sobkowiak.holedetectorsobkowiak;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +19,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -23,7 +27,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
 
 public class MainActivity extends Activity {
 
@@ -41,9 +47,15 @@ public class MainActivity extends Activity {
     private double changeInAccelleration;
 
     private TextView text_OD;
+    private TextView text_ODD;
 
     private Button button_DD;
-    private Button TestButton;
+    private Button clear_button;
+    private Button submit_button;
+    private View divider;
+
+    public Paint paint;
+    public Path path;
 
     private Switch switch1;
 
@@ -82,6 +94,48 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         text_OD = findViewById(R.id.text_OD);
+        text_ODD = findViewById(R.id.text_ODD);
+        divider = findViewById(R.id.divider);
+
+        MainActivity.Draw draw = new MainActivity.Draw(this);
+        ConstraintLayout layout1 = (ConstraintLayout) findViewById(R.id.draw);
+        layout1.addView(draw);
+
+        //Czyszczenie canvasu
+        clear_button = findViewById(R.id.clear_button);
+        clear_button.setOnClickListener(new View.OnClickListener()
+
+        {
+            @Override
+            public void onClick (View v){
+                clearCanvas();
+            }
+        });
+
+        //Potwierdzenie Canvasu
+        submit_button = findViewById(R.id.submit_button);
+        submit_button.setOnClickListener(new View.OnClickListener()
+
+        {
+            @Override
+            public void onClick (View v){
+                // sprawdź czy currentLocation zawiera dane o aktualnej lokalizacji
+                if (currentLocation != null) {
+
+
+                    // zapisz aktualną lokalizację do bazy danych
+                    saveLocationToDB(currentLocation, changeInAccelleration);
+                    layout1.setVisibility(View.GONE);
+
+                    divider.setVisibility(View.VISIBLE);
+                    text_OD.setVisibility(View.VISIBLE);
+                    text_ODD.setVisibility(View.VISIBLE);
+
+                    // wyświetl komunikat o sukcesie
+                    Toast.makeText(MainActivity.this, "Lokalizacja zapisana do bazy danych", Toast.LENGTH_SHORT).show();
+                }
+                }
+        });
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
@@ -136,35 +190,18 @@ public class MainActivity extends Activity {
         button_DD.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // sprawdź czy currentLocation zawiera dane o aktualnej lokalizacji
-                if (currentLocation != null) {
-                    // zapisz aktualną lokalizację do bazy danych
-                    saveLocationToDB(currentLocation, changeInAccelleration);
-                    // ukryj button
-                    button_DD.setVisibility(View.GONE);
-                    // wyświetl komunikat o sukcesie
-                    Toast.makeText(MainActivity.this, "Lokalizacja zapisana do bazy danych", Toast.LENGTH_SHORT).show();
-                }
+                // ukryj
+                button_DD.setVisibility(View.GONE);
+                divider.setVisibility(View.GONE);
+                text_OD.setVisibility(View.GONE);
+                text_ODD.setVisibility(View.GONE);
+
+                layout1.setVisibility(View.VISIBLE);
             }
         });
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-
-        //Test
-        TestButton = findViewById(R.id.button);
-        TestButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                MainActivity2();
-            }
-        });
-    }
-
-    public void MainActivity2(){
-        Intent intent = new Intent(this, MainActivity2.class);
-        startActivity(intent);
     }
 
     @Override
@@ -183,6 +220,47 @@ public class MainActivity extends Activity {
                 switch1.setChecked(false);
             }
         }
+    }
+    private class Draw extends View{
+        public Draw(Context Context) {
+            super(Context);
+            paint = new Paint();
+            path = new Path();
+            paint.setColor(Color.BLACK);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(8f);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            canvas.drawPath(path, paint);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            float x = event.getX();
+            float y = event.getY();
+
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    path.moveTo(x, y);
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    path.lineTo(x, y);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    break;
+                default:
+                    return false;
+            }
+            invalidate();
+            return true;
+        }
+    }
+
+    private void clearCanvas(){
+        path.reset();
     }
     private void saveLocationToDB(Location location, double changeInAccelleration) {
         // otwórz połączenie z bazą danych
