@@ -3,9 +3,11 @@ package com.adam_sobkowiak.holedetectorsobkowiak;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -19,6 +21,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Base64;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -30,6 +33,8 @@ import android.widget.Toast;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
+
+import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends Activity {
 
@@ -45,6 +50,7 @@ public class MainActivity extends Activity {
     private double accelerationCurrValue;
     private double accelerationPrevValue;
     private double changeInAccelleration;
+    private byte[] byteArray;
 
     private TextView text_OD;
     private TextView text_ODD;
@@ -54,10 +60,14 @@ public class MainActivity extends Activity {
     private Button submit_button;
     private View divider;
 
+    private Intent intent;
+
     public Paint paint;
     public Path path;
 
     private Switch switch1;
+
+    public Bitmap bitmap;
 
     private SensorEventListener sensorListener = new SensorEventListener() {
         @Override
@@ -89,7 +99,7 @@ public class MainActivity extends Activity {
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -97,9 +107,10 @@ public class MainActivity extends Activity {
         text_ODD = findViewById(R.id.text_ODD);
         divider = findViewById(R.id.divider);
 
-        MainActivity.Draw draw = new MainActivity.Draw(this);
+        MainActivity.Draw drawCanva = new MainActivity.Draw(this);
         ConstraintLayout layout1 = (ConstraintLayout) findViewById(R.id.draw);
-        layout1.addView(draw);
+        ConstraintLayout layout2 = (ConstraintLayout) findViewById(R.id.drawCanva);
+        layout2.addView(drawCanva);
 
         //Czyszczenie canvasu
         clear_button = findViewById(R.id.clear_button);
@@ -122,19 +133,27 @@ public class MainActivity extends Activity {
                 // sprawdź czy currentLocation zawiera dane o aktualnej lokalizacji
                 if (currentLocation != null) {
 
+                    layout2.setDrawingCacheEnabled(true);
+                    layout2.buildDrawingCache();
+                    layout2.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+                    bitmap = layout2.getDrawingCache();
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byteArray = stream.toByteArray();
 
                     // zapisz aktualną lokalizację do bazy danych
-                    saveLocationToDB(currentLocation, changeInAccelleration);
+                    saveLocationToDB(currentLocation, changeInAccelleration, byteArray);
                     layout1.setVisibility(View.GONE);
 
                     divider.setVisibility(View.VISIBLE);
                     text_OD.setVisibility(View.VISIBLE);
                     text_ODD.setVisibility(View.VISIBLE);
 
+                    bitmap.recycle();
                     // wyświetl komunikat o sukcesie
                     Toast.makeText(MainActivity.this, "Lokalizacja zapisana do bazy danych", Toast.LENGTH_SHORT).show();
                 }
-                }
+            }
         });
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -262,22 +281,25 @@ public class MainActivity extends Activity {
     private void clearCanvas(){
         path.reset();
     }
-    private void saveLocationToDB(Location location, double changeInAccelleration) {
+    private void saveLocationToDB(Location location, double changeInAccelleration, byte[] hole) {
         // otwórz połączenie z bazą danych
-        SQLiteDatabase db = openOrCreateDatabase("locations", MODE_PRIVATE, null);
+        SQLiteDatabase db = openOrCreateDatabase("HoleDetect", MODE_PRIVATE, null);
         // utwórz tabelę, jeśli nie istnieje
-        db.execSQL("CREATE TABLE IF NOT EXISTS locations (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, latitude REAL, longitude REAL, change REAL);");
+        db.execSQL("CREATE TABLE IF NOT EXISTS HoleDetect (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, latitude REAL, longitude REAL, change REAL, hole BLOB);");
         // utwórz zapytanie INSERT
-        String sql = "INSERT INTO locations (latitude, longitude, change) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO HoleDetect (latitude, longitude, change, hole) VALUES (?, ?, ?, ?)";
         // utwórz obiekt zapytania
         SQLiteStatement statement = db.compileStatement(sql);
         // ustaw wartości dla zapytania
         statement.bindDouble(1, location.getLatitude());
         statement.bindDouble(2, location.getLongitude());
         statement.bindDouble(3, changeInAccelleration);
-        text_OD.setText("Lat: "+location.getLatitude() + ", Lon: "+location.getLongitude() +", Moc: "+ changeInAccelleration);
+        statement.bindBlob(4, hole);
         // wykonaj zapytanie
         statement.executeInsert();
+
+        text_OD.setText("Lat: "+location.getLatitude() + ", Lon: "+location.getLongitude() +", Moc: "+ changeInAccelleration);
+
         // zamknij obiekt zapytania i połączenie z bazą danych
         statement.close();
         db.close();
